@@ -1,0 +1,330 @@
+namespace odevDagitimFinal.Controllers
+{
+    public class ServiceController : ApiController
+    {
+        DB2Entities db = new DB2Entities();
+        SonucModel sonuc = new SonucModel();
+
+        #region ders
+        [HttpGet]
+        [Route("api/dersliste")]
+        public List<DersModel> DersListe()
+        {
+            List<DersModel> liste = db.Ders.Select(x => new DersModel()
+            {
+                dersId = x.dersId,
+                dersKodu = x.dersKodu,
+                dersAd = x.dersAd,
+            }).ToList();
+
+            return liste;
+        }
+
+        [HttpGet]
+        [Route("api/dersbyid/{dersId}")]
+        public DersModel DersById(String dersId)
+        {
+            DersModel kayit = db.Ders.Where(s => s.dersId == dersId).Select(x => new DersModel()
+            {
+                dersId = x.dersId,
+                dersKodu = x.dersKodu,
+                dersAd = x.dersAd,
+
+            }).SingleOrDefault();
+            return kayit;
+
+        }
+        
+        [HttpPost]
+        [Route("api/dersekle")]
+        public SonucModel DersEkle(DersModel model)
+        {
+            if(db.Ders.Count(s =>s.dersKodu == model.dersKodu) > 0)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "girilen ders kodu kayıtlıdır!";
+                return sonuc;
+            }
+
+            Ders yeni = new Ders();
+            yeni.dersId = Guid.NewGuid().ToString();
+            yeni.dersKodu = model.dersKodu;
+            yeni.dersAd = model.dersAd;
+            db.Ders.Add(yeni);
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Ders eklendi";
+            return sonuc;
+        }
+        
+        [HttpPut]
+        [Route("api/dersduzenle")]
+        public SonucModel DersDuzenle(DersModel model)
+        {
+            Ders kayit = db.Ders.Where(s => s.dersId == model.dersId).SingleOrDefault();
+
+            if (kayit == null)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "ders bulunamadı";
+                return sonuc;
+            }
+            kayit.dersKodu = model.dersKodu;
+            kayit.dersAd = model.dersAd;
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "ders düzenlendi";
+ 
+            return sonuc;        
+     
+    
+        }
+    
+        [HttpDelete]
+        [Route("api/derssil/{dersId}")]
+        public SonucModel DersSil(String dersId)
+        {
+            Ders kayit = db.Ders.Where(s => s.dersId == dersId).SingleOrDefault();
+
+            if (kayit == null)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "Dersbulunamadı";
+                return sonuc;
+            }
+
+            if (db.Kayit.Count(s => s.kayitDersId == dersId) > 0)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "Derse kayıtlı öğrenci bulunmakta bu yüzden ders silinimedi";
+                return sonuc;
+            }
+
+            db.Ders.Remove(kayit);
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Ders silindi";
+            return sonuc;
+        }
+        #endregion
+
+
+        #region Ogrenci
+        [HttpGet]
+        [Route("api/ogrenciliste")]
+        public List<OgrenciModel> OgrenciListe()
+        {
+            List<OgrenciModel> liste = db.ogrenci.Select(x => new OgrenciModel()
+            {
+                ogrId = x.ogrId,
+                ogrNo = x.ogrNo,
+                ogrAd = x.ogrAd,
+            }).ToList();
+            return liste;                        
+        }
+
+        [HttpGet]
+        [Route("api/ogrencibyid/{ogrId}")]
+        public OgrenciModel OgrenciById(string ogrId)
+        {
+            OgrenciModel kayit = db.ogrenci.Where(s => s.ogrId== ogrId).Select(x => new OgrenciModel()
+            {
+                ogrId = x.ogrId,
+                ogrNo = x.ogrNo,
+                ogrAd = x.ogrAd,
+            }).SingleOrDefault();
+            return kayit;
+        }
+
+
+        [HttpPost]
+        [Route("api/ogrenciekle")]
+        public SonucModel OgrenciEkle(OgrenciModel model)
+        {
+            if(db.ogrenci.Count(s => s.ogrNo == model.ogrNo)> 0)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "girilen öğrenci numarası kayıtlıdır ";
+            }
+            ogrenci yeni = new ogrenci();
+            yeni.ogrId = Guid.NewGuid().ToString();
+            yeni.ogrNo = model.ogrNo;
+            yeni.ogrAd = model.ogrAd;
+            db.ogrenci.Add(yeni);
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Öğrenci Başarıyla eklendi";
+            return sonuc;
+        }
+        
+        [HttpPut]
+        [Route("api/ogrenciduzenle")]
+        public SonucModel OgrenciDuzenle(OgrenciModel model)
+        {
+            ogrenci kayit = db.ogrenci.Where(s => s.ogrId == model.ogrId).SingleOrDefault();
+            if(kayit == null)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "kayıt bulunamadı";
+                return sonuc;               
+            }
+            kayit.ogrNo = model.ogrNo;
+            kayit.ogrAd = model.ogrAd;
+
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Öğrenci Düzenlendi!";
+            return sonuc;
+        }
+
+        [HttpDelete]
+        [Route("api/ogrencisil/{ogrId}")]
+        public SonucModel OgrenciSil(String ogrId)
+        {
+            ogrenci kayit = db.ogrenci.Where(s => s.ogrId == ogrId).SingleOrDefault();
+            if (kayit == null)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "kayıt bulunamadı";
+                return sonuc;
+            }
+
+            if(db.Kayit.Count(s => s.kayitOgrId == ogrId) > 0)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "Öğrenci üzerinde ders kaydı olduğu için öğrenci silinemedi";
+                return sonuc;
+            }
+
+            db.ogrenci.Remove(kayit);
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Öğrenci silindi";
+            return sonuc;
+        }
+        #endregion
+
+        #region kayit
+
+        [HttpGet]
+        [Route("api/ogrencidersliste/{ogrId}")]
+        public List<KayitModel> OgrenciDersListe(string ogrId)
+        {
+            List<KayitModel> liste = db.Kayit.Where(s => s.kayitOgrId == ogrId).Select(x => new KayitModel()
+            {
+                kayitId = x.kayitId,
+                kayitDersId=x.kayitDersId,
+                kayitOgrId=x.kayitOgrId,
+            }).ToList();
+
+            foreach (var kayit in liste)
+            {
+                kayit.ogrBilgi = OgrenciById(kayit.kayitOgrId);
+                kayit.dersBilgi = DersById(kayit.kayitDersId);
+                
+            }
+            return liste;
+        }
+
+
+        [HttpGet]
+        [Route("api/dersogrenciliste/{dersId}")]
+        public List<KayitModel> DersOgrenciListe(string dersId)
+        {
+            List<KayitModel> liste = db.Kayit.Where(s => s.kayitDersId == dersId).Select(x => new KayitModel()
+            {
+                kayitId = x.kayitId,
+                kayitDersId = x.kayitDersId,
+                kayitOgrId = x.kayitOgrId,
+            }).ToList();
+
+            foreach (var kayit in liste)
+            {
+                kayit.ogrBilgi = OgrenciById(kayit.kayitOgrId);
+                kayit.dersBilgi = DersById(kayit.kayitDersId);
+
+            }
+            return liste;
+        }
+
+        [HttpPost]
+        [Route("api/kayitekle")]
+        public SonucModel KayitEkle(KayitModel model)
+        {
+            if(db.Kayit.Count(s => s.kayitDersId==model.kayitDersId && s.kayitOgrId == model.kayitOgrId) > 0)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "ilgili öğrenci derse önceden kaydı bulunmaktadır!";
+                return sonuc;
+            }
+            Kayit yeni = new Kayit();
+            yeni.kayitId = Guid.NewGuid().ToString();
+            yeni.kayitOgrId = model.kayitOgrId;
+            yeni.kayitDersId = model.kayitDersId;
+            db.Kayit.Add(yeni);
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Ders kaydı eklendi!";
+            return sonuc;
+        }
+
+        [HttpDelete]
+        [Route("api/kayitsil/{kayitId}")]
+        public SonucModel KayitSil(string kayitId)
+        {
+            Kayit kayit = db.Kayit.Where(s => s.kayitId == kayitId).SingleOrDefault();
+
+            if (kayit == null)
+            {
+                sonuc.islem = false;
+                sonuc.mesaj = "kayıt bulunamadı!";
+                return sonuc;
+            }
+            db.Kayit.Remove(kayit);
+            db.SaveChanges();
+            sonuc.islem = true;
+            sonuc.mesaj = "Ders kaydı silindi ";
+            return sonuc;
+        }
+        #endregion
+    }
+
+-------------------------------------------------------------------------------------
+ public class DersModel
+    {
+        public string dersId { get; set; }
+        public string dersKodu { get; set; }
+        public string dersAd { get; set; }
+
+
+    }
+
+----------------------------------------------------------------------------------------
+public class KayitModel
+    {
+        public string kayitId { get; set; }
+        public string kayitDersId { get; set; }
+        public string kayitOgrId { get; set; }
+        public OgrenciModel ogrBilgi { get; set; }
+        public DersModel dersBilgi { get; set; }
+
+
+    }
+
+-----------------------------------------------------------------------------------------------
+
+ public class OgrenciModel
+    {
+        public string ogrId { get; set; }
+        public string ogrNo { get; set; }
+        public string ogrAd { get; set; }
+
+
+    }
+------------------------------------------------------------------------------------------------
+public class SonucModel
+    {
+        public bool islem { get; set; }
+        public string mesaj { get; set; }
+
+    }

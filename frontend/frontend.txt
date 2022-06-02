@@ -1,0 +1,285 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport
+      [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="(isHandset$ | async) === false">
+    <mat-toolbar>Menu</mat-toolbar>
+    <mat-nav-list>
+      <a mat-list-item [routerLink]="['/ogrenci']">Öğrenciler</a>
+      <a mat-list-item [routerLink]="['/ders']">Dersler</a>
+      
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <button
+        type="button"
+        aria-label="Toggle sidenav"
+        mat-icon-button
+        (click)="drawer.toggle()"
+        *ngIf="isHandset$ | async">
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+      <span>Ödev Dağıtım Portalı</span>
+    </mat-toolbar>
+    <!-- Add Content Here -->
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+
+-------------------------------------------------------------------------------------------------------------
+HOME components
+
+<div class="container">
+  <button mat-raised-button color="accent" (click)="AlertAc(true)">Onaylandı</button>&nbsp;
+  <button mat-raised-button color="warn"(click)="AlertAc(false)">Onaylanmadı</button>&nbsp;
+  <button mat-raised-button color="warn"(click)="ConfirmAc()">deneme</button>
+</div>
+
+-------------------------------------------------------------------------------------------------------------------
+Home.component.ts
+
+export class HomeComponent implements OnInit {
+  conifrmDialogRef:MatDialogRef<ConfirmDialogComponent>;
+  constructor(
+    public alert:MyAlertService,
+    public matDialog:MatDialog
+  ) { }
+
+  ngOnInit() {
+  }
+
+  AlertAc(p:boolean){
+    var s:Sonuc=new Sonuc();
+    s.islem=p;
+    s.mesaj="işlem onaylandı"
+    
+    this.alert.AlertUygula(s);
+  }
+  
+  ConfirmAc(){
+    this.conifrmDialogRef=this.matDialog.open(ConfirmDialogComponent,{
+      width: '400px'
+    });
+    this.conifrmDialogRef.componentInstance.dialogMesaj="Kayıt silinecektir onaylıyor musunuz ?"
+    this.conifrmDialogRef.afterClosed().subscribe(d=>{
+      console.log(d)
+      if (d){
+
+      }
+    })
+  }
+
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+<mat-toolbar color="primary " class="mat-elevation-z6">
+  <span>İşlem Onay</span>
+</mat-toolbar>
+
+<div class="container">
+  {{dialogMesaj}}
+</div>
+
+<button mat-raised-button  color="accent" (click)="dialogRef.close(true)">Kabul Et</button>
+<button mat-raised-button  color="warn" (click)="dialogRef.close(false)">Reddet</button>
+
+
+
+-----------------------------------------------------------------------------------------------------------
+export class ConfirmDialogComponent implements OnInit {
+  dialogMesaj:string;
+  constructor(
+    public dialogRef: MatDialogRef<ConfirmDialogComponent>
+  ) { }
+
+  ngOnInit() {
+  }
+
+}
+---------------------------------------------------------------------------------------------------------------
+
+export class AlertDialogComponent implements OnInit {
+  dialogBaslik: string;
+  dialogMesaj:string;
+  dialogIslem:boolean;
+  constructor(
+    public dialogRef: MatDialogRef<AlertDialogComponent>
+  ) { }
+
+  ngOnInit() {
+  }
+
+}
+-------------------------------------------------------------------------------------------------------------
+<mat-toolbar [color]="dialogIslem ?'accent' : 'warn' " class="mat-elevation-z6">
+  <span>{{dialogBaslik}}</span>
+</mat-toolbar>
+
+<div class="container">
+  {{dialogMesaj}}
+</div>
+
+<button mat-raised-button  [color]="dialogIslem ?'accent' : 'warn' " (click)="dialogRef.close()" >Kapat</button>
+-------------------------------------------------------------------------------------------------------------------
+
+export class ApiService {
+  apiUrl="https://localhost:44333/api/";
+  constructor(
+    
+    public http: HttpClient
+  ) { }
+  
+  OgrenciListe(){
+    return this.http.get(this.apiUrl+"ogrenciliste");
+  }
+
+  OgrenciById(ogrId:string){
+
+    return this.http.get(this.apiUrl+"ogrencibyid/"+ ogrId);
+
+
+  }
+
+  OgrenciEkle(ogr: Ogrenci){
+    return this.http.post(this.apiUrl+"ogrenciekle",ogr);
+  }
+
+  OgrenciDuzenle(ogr:Ogrenci){
+    return this.http.put(this.apiUrl+"ogrenciduzenle",ogr)
+  }
+
+  OgrenciSil(ogrId:string){
+
+    return this.http.delete(this.apiUrl+"ogrencibyid/"+ ogrId);
+
+
+  }
+
+
+
+  DersListe(){
+    return this.http.get(this.apiUrl+"dersliste");
+  }
+
+  DersById(dersId:string){
+
+    return this.http.get(this.apiUrl+"dersbyid/"+ dersId);
+
+
+  }
+
+  DersEkle(ders: Ders){
+    return this.http.post(this.apiUrl+"dersekle",ders);
+  }
+
+  DersDuzenle(ders:Ders){
+    return this.http.put(this.apiUrl+"dersduzenle",ders)
+  }
+
+  DersSil(dersId:string){
+
+    return this.http.delete(this.apiUrl+"dersbyid/"+ dersId);
+
+
+  }
+
+
+
+
+
+
+
+
+}
+------------------------------------------------------------------------------------------------
+export class MyAlertService {
+  alertDialogRef: MatDialogRef<AlertDialogComponent>;
+  constructor(
+    public matDialog: MatDialog
+  ) { }
+
+  AlertUygula(s: Sonuc){
+    var baslik = "";
+    
+    if (s.islem){
+      baslik = "İşlem Tamam";
+      
+    }else{
+      baslik ="İşlem Başarısız";
+      
+    }
+
+    this.alertDialogRef=this.matDialog.open(AlertDialogComponent,{
+      width: '300px'
+    })
+
+    this.alertDialogRef.componentInstance.dialogBaslik= baslik;
+    this.alertDialogRef.componentInstance.dialogMesaj= s.mesaj;
+    this.alertDialogRef.componentInstance.dialogIslem= s.islem;
+
+
+    
+  }  
+
+
+
+}
+----------------------------------------------------------------------------------------
+@NgModule({
+  declarations: [
+    AppComponent,
+    HomeComponent,
+    MainNavComponent,
+    OgrenciComponent,
+    DersComponent,
+
+    //dialoglar
+    AlertDialogComponent,
+    ConfirmDialogComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    MaterialModule,
+    HttpClientModule
+  ],
+  entryComponents:[
+    AlertDialogComponent,
+    ConfirmDialogComponent
+  ],
+  providers: [MyAlertService],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+-------------------------------------------------------------------------------------------
+
+import { MatListModule } from '@angular/material/list';
+import { NgModule } from '@angular/core';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
+import {MatDividerModule} from '@angular/material/divider';
+import {MatDialogModule} from '@angular/material/dialog';
+import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatCardModule} from '@angular/material/card';
+
+const MatModuller = [
+  
+  MatButtonModule,
+  MatIconModule,
+  MatDividerModule,
+  MatDialogModule,
+  MatToolbarModule,
+  MatSidenavModule,  
+  MatCardModule,
+  MatListModule,
+];
+
+@NgModule({
+  imports: [MatModuller],
+  exports: [MatModuller]
+})
+export class MaterialModule { }
